@@ -82,11 +82,11 @@ def AudioProcessing(n, sample, bit, blnLoud):
 
 
     # 結果表示
-    tkinter.messagebox.showinfo("音割れ完了", "ラウドネスを最大化しました\n\n" + "・Before: " + str(round(LUFS_start, 3)) + " LUFS\n" + "・After: " + str(round(max_value, 3)) + " LUFS\n" + "・音量変化: +" + str(max_index) + "dB\n" + "・原曲との音圧の比率: " + str(round(pow(10, max_index/20), 3))) # （倍率）= 10^{(上げたデシベル)/20}
+    tkinter.messagebox.showinfo("音割れ完了", "ラウドネスを最大化しました\n\n" + "・Before: " + str(round(LUFS_start, 3)) + " LUFS\n" + "・After: " + str(round(max_value, 3)) + " LUFS\n" + "・音量変化: +" + str(max_index) + "dB")
     if blnLoud == True:
         x = [i+1 for i in range(n)]
         pyplot.plot(x, LUFS) # ラウドネスの変化をグラフで表示
-        pyplot.xlabel("Amplification rate [dB]")
+        pyplot.xlabel("Gain [dB]")
         pyplot.ylabel("Loudness [LUFS]")
         pyplot.show()
         
@@ -109,7 +109,7 @@ blnLoud = tk.BooleanVar()
 blnLoud.set(True) # ラウドネスの推移を表示するか否か
 sample = tk.IntVar()
 sample.set(44100) # サンプリングレートの初期値
-n = 151 # 最大増幅率の初期値
+n = 151 # 最大ゲインの初期値
 dB = tk.Entry(root)
 bit = tk.StringVar()
 bit.set("s16le") # ビット深度の初期値
@@ -122,10 +122,10 @@ def pushed():
 button = tk.Button(root, text="音源を最適化", command=pushed)
 button.pack(pady=10, side="bottom")
 
-# 最大増幅率
+# 最大ゲイン
 dB.pack(pady=10, side="bottom")
 dB.insert(tk.END, n-1)
-opt1 = tk.Label(root, text="\n【最大増幅率 [dB]】")
+opt1 = tk.Label(root, text="\n【最大ゲイン [dB]】")
 opt1.pack(side="bottom")
 
 # ラウドネスの推移の表示
