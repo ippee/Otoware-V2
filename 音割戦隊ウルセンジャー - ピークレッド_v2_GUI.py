@@ -23,6 +23,7 @@
 import soundfile as sf
 import pyloudnorm as pyln
 import os
+import sys
 from ffmpy import FFmpeg
 import tkinter as tk
 import tkinter.filedialog
@@ -33,6 +34,13 @@ from matplotlib import pyplot
 
 
 ### 関数定義 ###
+# リソースファイルを参照する関数（参考：https://qiita.com/firedfly/items/f6de5cfb446da4b53eeb）
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+
 # オーディオファイルを書き出す関数
 def ffmpegWrite(input, output, volume, sample, bit): # input, outputは拡張子込み
     ff = FFmpeg(
@@ -42,6 +50,7 @@ def ffmpegWrite(input, output, volume, sample, bit): # input, outputは拡張子
     ff.cmd
     ff.run() # 実行されるコマンドは、ffmpeg -i (input) -af "volume = i dB" (output)
 
+
 # ラウドネスを測定する関数
 def measureLoudness(input):
     CheckLoudness, rate = sf.read(input) # オーディオ読み込み
@@ -49,18 +58,26 @@ def measureLoudness(input):
     result = meter.integrated_loudness(CheckLoudness) # Integrated Loudnessを測定
     return result
 
+
 # ボタンを押したときに動く関数
 def AudioProcessing(n, sample, bit, blnLoud):
+    # ボタン止める
+    global button
+    button.config(state="disable", text="処理中……")
+
     # 音声読み込み
     typ = [('', '*'), ('wav','*.wav'), ('mp3','*.mp3'), ('ogg','*.ogg'), ('flac','*.flac'), ('wma','*.wma'), ('aac','*.aac'), ('m4a','*.m4a')] 
     dir = os.getcwd()
     path = tkinter.filedialog.askopenfilename(filetypes = typ, initialdir = dir)
-    path = path.replace("/", "\\")
+    if path == "":
+        button.config(state="active", text="音源を最適化")
+        return "break"
     
-    FileName = path[path.rfind( "\\" ) + 1 : path.rfind(".")] # ファイル名取得
+    # ファイル名取得
+    path = path.replace("/", "\\")
+    FileName = path[path.rfind( "\\" ) + 1 : path.rfind(".")] 
     ffmpegWrite(path, "srcWav.wav", 0, sample, bit)
     LUFS_start = measureLoudness("srcWav.wav") # 原曲のIntegrated Loudnessを測定
-
 
     # 音声処理
     LUFS = [[] for i in range(n)] # ラウドネスの測定結果をLUFSに代入していく
@@ -69,7 +86,6 @@ def AudioProcessing(n, sample, bit, blnLoud):
         ffmpegWrite("srcWav.wav", "processing.wav", i, sample, bit) # i[dB]だけ音量を上げる
         LUFS[i] = measureLoudness("processing.wav") # 音量操作後のIntegrated Loudnessを測定
         os.remove("processing.wav") # ffmpyではファイルの上書きができないので、音量操作後のファイルを一度消す必要がある
-
 
     # 音声出力
     max_value = max(LUFS) # ラウドネスの最大値を取得
@@ -80,6 +96,8 @@ def AudioProcessing(n, sample, bit, blnLoud):
     ffmpegWrite("srcWav.wav", "音割れ"+FileName+".wav", max_index, sample, bit)
     os.remove("srcWav.wav")
 
+    # ボタン復活
+    button.config(state="active", text="音源を最適化")
 
     # 結果表示
     tkinter.messagebox.showinfo("音割れ完了", "ラウドネスを最大化しました\n\n" + "・Before: " + str(round(LUFS_start, 3)) + " LUFS\n" + "・After: " + str(round(max_value, 3)) + " LUFS\n" + "・音量変化: +" + str(max_index) + "dB")
@@ -88,8 +106,11 @@ def AudioProcessing(n, sample, bit, blnLoud):
         pyplot.plot(x, LUFS) # ラウドネスの変化をグラフで表示
         pyplot.xlabel("Gain [dB]")
         pyplot.ylabel("Loudness [LUFS]")
+        pyplot.Figure()
+        thismanager = pyplot.get_current_fig_manager()
+        thismanager.window.wm_iconbitmap(resource_path("src/icon.ico"))
         pyplot.show()
-        
+
 
 
 ### ウインドウ設定 ###
@@ -97,32 +118,38 @@ root = tk.Tk()
 root.title("音割戦隊ウルセンジャー ピークレッド V2")
 root.geometry("340x570")
 root.resizable(0,0)
+root.iconbitmap(default=resource_path("src/icon.ico"))
 
-image1 = tk.PhotoImage(file = "bg.png")
+image1 = tk.PhotoImage(file = resource_path("src/bg.png"))
 tk.Label(root, image=image1).pack()
 
 discription = tk.Label(root, text="楽曲のラウドネスを最大化し、高品質な音割れ音源を生成します\n（測定アルゴリズム: ITU-R BS.1770）")
 discription.pack(pady=10, side="top")
 
+
+
 ### ウィジェット ###
+# 変数設定
 blnLoud = tk.BooleanVar()
 blnLoud.set(True) # ラウドネスの推移を表示するか否か
 sample = tk.IntVar()
 sample.set(44100) # サンプリングレートの初期値
 n = 151 # 最大ゲインの初期値
-dB = tk.Entry(root)
 bit = tk.StringVar()
 bit.set("s16le") # ビット深度の初期値
 
 # 最適化開始ボタン
 def pushed():
+    global dB
     n = dB.get()
     AudioProcessing(int(n)+1, sample.get(), bit.get(), blnLoud.get())
 
-button = tk.Button(root, text="音源を最適化", command=pushed)
+button = tk.Button(root, text="音源を最適化")
+button.config(command=pushed)
 button.pack(pady=10, side="bottom")
 
 # 最大ゲイン
+dB = tk.Entry(root)
 dB.pack(pady=10, side="bottom")
 dB.insert(tk.END, n-1)
 opt1 = tk.Label(root, text="\n【最大ゲイン [dB]】")
