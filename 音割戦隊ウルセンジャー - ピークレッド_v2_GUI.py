@@ -4,7 +4,7 @@
 # 
 # 【Readme】 
 # 音割戦隊ウルセンジャー ピークレッド V2では、
-# 人間の聴覚特性を考慮した音のうるささを測る指標「ラウドネス」を用いることで、
+# 人間の聴覚特性を考慮した音のうるささを測る指標「ラウドネス」を用いて、
 # 人間が最もうるさいと感じる真の音割れ音源の生成します
 # （測定アルゴリズム: ITU-R BS.1770）
 # 
@@ -76,16 +76,20 @@ def AudioProcessing(n, sample, bit, blnLoud):
     # ファイル名取得
     path = path.replace("/", "\\")
     FileName = path[path.rfind( "\\" ) + 1 : path.rfind(".")] 
+    if os.path.exists("srcWav.wav") == True:
+        os.remove("srcWav.wav") # ffmpyではファイルの上書きができないので、ファイルを消す必要がある
     ffmpegWrite(path, "srcWav.wav", 0, sample, bit)
     LUFS_start = measureLoudness("srcWav.wav") # 原曲のIntegrated Loudnessを測定
 
     # 音声処理
     LUFS = [[] for i in range(n)] # ラウドネスの測定結果をLUFSに代入していく
-
+    if os.path.exists("processing.wav") == True:
+        os.remove("processing.wav")
+    
     for i in range(n):
         ffmpegWrite("srcWav.wav", "processing.wav", i, sample, bit) # i[dB]だけ音量を上げる
         LUFS[i] = measureLoudness("processing.wav") # 音量操作後のIntegrated Loudnessを測定
-        os.remove("processing.wav") # ffmpyではファイルの上書きができないので、音量操作後のファイルを一度消す必要がある
+        os.remove("processing.wav")
 
     # 音声出力
     max_value = max(LUFS) # ラウドネスの最大値を取得
