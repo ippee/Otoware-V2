@@ -90,7 +90,7 @@ def AudioProcessing(n, sample, bit, blnLoud):
 
     if os.path.exists("音割れ"+FileName+".wav") == True:
         os.remove("音割れ"+FileName+".wav")
-    audioWrite("srcWav.wav", "音割れ"+FileName+".wav", max_index, sample, bit)
+    audioWrite("srcWav.wav", '"音割れ{}.wav"'.format(FileName), max_index, sample, bit)
     os.remove("srcWav.wav")
 
     # ボタン復活
