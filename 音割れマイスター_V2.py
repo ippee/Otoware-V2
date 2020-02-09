@@ -80,6 +80,7 @@ def AudioProcessing(n, sample, bit, blnLoud):
     LUFS = [[] for i in range(n)] # ラウドネスの測定結果をLUFSに代入していく
     
     for i in range(n):
+        print("+ {} dB".format(i))
         audioWrite("srcWav.wav", "processing.wav", i, sample, bit) # i[dB]だけ音量を上げる
         LUFS[i] = measureLoudness("processing.wav") # 音量操作後のIntegrated Loudnessを測定
         os.remove("processing.wav") # ファイルの上書きができないので、ファイルを消す必要がある
