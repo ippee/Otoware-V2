@@ -44,7 +44,7 @@ def resource_path(relative_path):
 # オーディオファイルを書き出す関数
 def audioWrite(input, output, volume, sample, bit): # input, outputは拡張子込み
     input = '"{}"'.format(input)
-    cmd = 'ffmpeg -i {} -ar {} -c:a pcm_{} -af "volume = {} dB" {}'.format(input, sample, bit, volume, output)
+    cmd = 'ffmpeg -hide_banner -i {} -ar {} -c:a pcm_{} -af "volume = {} dB" {}'.format(input, sample, bit, volume, output)
     call(cmd)
 
 
@@ -82,7 +82,7 @@ def AudioProcessing(n, sample, bit, blnLoud):
     for i in range(n):
         audioWrite("srcWav.wav", "processing.wav", i, sample, bit) # i[dB]だけ音量を上げる
         LUFS[i] = measureLoudness("processing.wav") # 音量操作後のIntegrated Loudnessを測定
-        os.remove("processing.wav") # ffmpyではファイルの上書きができないので、ファイルを消す必要がある
+        os.remove("processing.wav") # ファイルの上書きができないので、ファイルを消す必要がある
 
     # 音声出力
     max_value = max(LUFS) # ラウドネスの最大値を取得
