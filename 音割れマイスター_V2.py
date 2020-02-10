@@ -140,7 +140,7 @@ def AudioProcessing(n, sample, bit, blnPlot, blnQuick):
 ### ウインドウ設定 ###
 root = tk.Tk()
 root.title("音割れマイスター " + ver)
-root.geometry("340x570")
+root.geometry("340x590")
 root.resizable(0,0)
 root.iconbitmap(default=resource_path("src/icon.ico"))
 
